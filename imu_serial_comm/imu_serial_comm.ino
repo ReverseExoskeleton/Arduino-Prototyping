@@ -95,7 +95,7 @@ void sendPacket(ICM_20948_SPI* sensor) {
   SERIAL_PORT.write(dataBuffer, sizeof(dataBuffer)/sizeof(dataBuffer[0]));
 }
 
-// Adapted from Mohsen Sarkars answer at https://stackoverflow.com/a/37761168
+// Adapted from Mohsen Sarkars answer at https://stackoverflow.com/a/37761168 (CC BY-SA 3.0)
 void floatToBytes(float twoByteFloat, uint8_t* a_twoByteBuffer) {
   int32_t fbits;
   memcpy(&fbits, &twoByteFloat, sizeof(fbits));
