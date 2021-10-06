@@ -28,7 +28,7 @@ void setup()
 
   SPI_PORT.begin();
 
-  myICM1.enableDebugging(); // Uncomment this line to enable helpful debug messages on Serial
+//  myICM1.enableDebugging(); // Uncomment this line to enable helpful debug messages on Serial
 
   bool initialized = false;
   while (!initialized)
@@ -36,11 +36,11 @@ void setup()
 
     myICM1.begin(CS_PIN_1, SPI_PORT);
 
-//    SERIAL_PORT.print(F("Initialization of sensor 1 returned: "));
-//    SERIAL_PORT.println(myICM1.statusString());
+    SERIAL_PORT.print(F("Initialization of sensor 1 returned: "));
+    SERIAL_PORT.println(myICM1.statusString());
     if (myICM1.status != ICM_20948_Stat_Ok)
     {
-//      SERIAL_PORT.println(F("Trying again..."));
+      SERIAL_PORT.println(F("Trying again..."));
       delay(500);
     }
     else
@@ -48,6 +48,8 @@ void setup()
       initialized = true;
     }
   }
+  SERIAL_PORT.print("Data Start");
+
 }
 
 bool dataSeen = false;
@@ -90,29 +92,31 @@ void sendPacket(ICM_20948_SPI* sensor) {
     floatToBytes(measurements[i], twoByteBuffer);
     memcpy(dataBuffer + (2 * i), twoByteBuffer, 2);
   }
-
   SERIAL_PORT.write(dataBuffer, sizeof(dataBuffer)/sizeof(dataBuffer[0]));
 }
 
+// Adapted from Mohsen Sarkars answer at https://stackoverflow.com/a/37761168
 void floatToBytes(float twoByteFloat, uint8_t* a_twoByteBuffer) {
-  memcpy(a_twoByteBuffer, &twoByteFloat, sizeof(float));
-//  int32_t fbits;
-//  memcpy(&fbits, &twoByteFloat, sizeof(fbits));
-////  int32_t fbits = BitConverter.ToInt32(BitConverter.GetBytes(twoByteFloat), 0);
-//  int32_t sign = fbits >> 16 & 0x8000;
-//  int32_t val = (fbits & 0x7fffffff) + 0x1000;
-//  if (val >= 0x47800000) {
-//    if ((fbits & 0x7fffffff) >= 0x47800000) {
-//      if (val < 0x7f800000) return I2B(sign | 0x7c00);
-//      
-//      return I2B(sign | 0x7c00 | (fbits & 0x007fffff) >> 13);
-//    }
-//    return I2B(sign | 0x7bff);
-//  }
-//  if (val >= 0x38800000) return I2B(sign | val - 0x38000000 >> 13);
-//  if (val < 0x33000000) return I2B(sign);
-//  val = (fbits & 0x7fffffff) >> 23;
-//  return I2B(sign | ((fbits & 0x7fffff | 0x800000) + (0x800000 >> val - 102) >> 126 - val));
+  int32_t fbits;
+  memcpy(&fbits, &twoByteFloat, sizeof(fbits));
+  int32_t sign = fbits >> 16 & 0x8000;
+  int32_t val = (fbits & 0x7fffffff) + 0x1000;
+  if (val >= 0x47800000) {
+    if ((fbits & 0x7fffffff) >= 0x47800000) {
+      if (val < 0x7f800000) return int32ToBytes(sign | 0x7c00, a_twoByteBuffer);
+      
+      return int32ToBytes(sign | 0x7c00 | (fbits & 0x007fffff) >> 13, a_twoByteBuffer);
+    }
+    return int32ToBytes(sign | 0x7bff, a_twoByteBuffer);
+  }
+  if (val >= 0x38800000) return int32ToBytes(sign | val - 0x38000000 >> 13, a_twoByteBuffer);
+  if (val < 0x33000000) return int32ToBytes(sign, a_twoByteBuffer);
+  val = (fbits & 0x7fffffff) >> 23;
+  return int32ToBytes(sign | ((fbits & 0x7fffff | 0x800000) + (0x800000 >> val - 102) >> 126 - val), a_twoByteBuffer);
+}
+
+void int32ToBytes(int32_t val, uint8_t* a_twoByteBuffer) {
+  memcpy(a_twoByteBuffer, &val, 2);
 }
 
 // Below here are some helper functions to print the data nicely!
