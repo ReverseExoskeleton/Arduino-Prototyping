@@ -48,7 +48,9 @@ void setup()
       initialized = true;
     }
   }
+  delay(1000);
   SERIAL_PORT.print("Data Start");
+  delay(10);
 
 }
 
@@ -67,19 +69,23 @@ void loop()
 //    SERIAL_PORT.print(myICM1.accX());
 //    printScaledAGMT(&myICM1);
     sendPacket(&myICM1);
+    delay(10);
     
     dataSeen = true;
-  }
-  if (dataSeen)
-  {
-    delay(30);
-    dataSeen = false;
-  }
-  else
-  {
+  } else {
 //    SERIAL_PORT.println("Waiting for data");
-    delay(500);
+    delay(2);
   }
+//  if (dataSeen)
+//  {
+//    delay(30);
+//    dataSeen = false;
+//  }
+//  else
+//  {
+////    SERIAL_PORT.println("Waiting for data");
+//    delay(500);
+//  }
 }
 
 void sendPacket(ICM_20948_SPI* sensor) {
